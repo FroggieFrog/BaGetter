@@ -21,7 +21,7 @@ BaGetter (pronounced "ba getter") is a lightweight NuGet and symbol server. It i
 You can run BaGetter on your preferred platform:
 
 - [On your computer](Installation/local.md)
-- [Docker](Installation/docker.md)
+- [Docker](Installation/docker.mdx)
 - [Azure](Installation/azure.md)
 - [AWS](Installation/aws.md)
 - [Google Cloud](Installation/gcp.md)
