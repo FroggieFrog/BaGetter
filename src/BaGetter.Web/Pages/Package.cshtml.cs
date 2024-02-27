@@ -56,6 +56,8 @@ public class PackageModel : PageModel
 
     public HtmlString Readme { get; private set; }
 
+    public HtmlString ParsedReleaseNotes { get; private set; }
+
     public string IconUrl { get; private set; }
     public string LicenseUrl { get; private set; }
     public string PackageDownloadUrl { get; private set; }
@@ -102,6 +104,8 @@ public class PackageModel : PageModel
         {
             Readme = await GetReadmeHtmlStringOrNullAsync(Package.Id, packageVersion, cancellationToken);
         }
+
+        ParsedReleaseNotes = ParseReleaseNotes();
 
         IconUrl = Package.HasEmbeddedIcon
             ? _url.GetPackageIconDownloadUrl(Package.Id, packageVersion)
@@ -198,19 +202,25 @@ public class PackageModel : PageModel
         NuGetVersion packageVersion,
         CancellationToken cancellationToken)
     {
-        string readme;
-        using (var readmeStream = await _content.GetPackageReadmeStreamOrNullAsync(packageId, packageVersion, cancellationToken))
-        {
-            if (readmeStream == null) return null;
+        await using var readmeStream = await _content.GetPackageReadmeStreamOrNullAsync(packageId, packageVersion, cancellationToken);
+        if (readmeStream == null) return null;
 
-            using (var reader = new StreamReader(readmeStream))
-            {
-                readme = await reader.ReadToEndAsync(cancellationToken);
-            }
-        }
+        using var reader = new StreamReader(readmeStream);
+        var readme = await reader.ReadToEndAsync(cancellationToken);
 
         var readmeHtml = Markdown.ToHtml(readme, MarkdownPipeline);
         return new HtmlString(readmeHtml);
+    }
+
+    private HtmlString ParseReleaseNotes()
+    {
+        if (string.IsNullOrWhiteSpace(Package.ReleaseNotes))
+        {
+            return HtmlString.Empty;
+        }
+
+        var releseNotesHtml = Markdown.ToHtml(Package.ReleaseNotes, MarkdownPipeline);
+        return new HtmlString(releseNotesHtml);
     }
 
     public class DependencyGroupModel
